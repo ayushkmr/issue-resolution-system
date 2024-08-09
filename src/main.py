@@ -8,12 +8,16 @@ import sys
 import threading
 import time
 import json
+import logging
 from issue import IssueStatus
 from issue_manager import IssueManager
 from agent_manager import AgentManager
 from agent_assignment_strategy import AgentAssignmentStrategy
 from issue_type import IssueType
 from factory import IssueFactory, AgentFactory, UserFactory
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # Global lock for synchronizing access to shared resources
 lock = threading.Lock()
@@ -31,11 +35,13 @@ def load_initial_data(agent_manager, user_factory):
 
     for agent_data in data['agents']:
         agent_manager.add_agent(agent_data['email'], agent_data['name'], agent_data['expertise'])
+        logging.info(f"Agent {agent_data['name']} added.")
 
     users = []
     for user_data in data['users']:
         user = user_factory.create_user(user_data['email'], user_data['name'])
         users.append(user)
+        logging.info(f"User {user_data['name']} created.")
 
     return users
 
@@ -48,10 +54,13 @@ def create_issues(user, issue_manager):
     """
     with lock:
         issue1 = user.raise_issue(issue_manager, "T1", IssueType.PAYMENT_RELATED, "Payment Failed", "My payment failed but money is debited")
+        logging.info(f"Issue {issue1.issue_id} created by user {user.name}.")
         time.sleep(2)  # Simulating delay in raising the next issue
         issue2 = user.raise_issue(issue_manager, "T2", IssueType.MUTUAL_FUND_RELATED, "Purchase Failed", "Unable to purchase Mutual Fund")
+        logging.info(f"Issue {issue2.issue_id} created by user {user.name}.")
         time.sleep(2)  # Simulating delay in raising the next issue
         issue3 = user.raise_issue(issue_manager, "T3", IssueType.PAYMENT_RELATED, "Payment Failed", "My payment failed but money is debited")
+        logging.info(f"Issue {issue3.issue_id} created by user {user.name}.")
     return [issue1, issue2, issue3]
 
 def assign_issues(strategy, issues, issue_manager):
@@ -65,6 +74,7 @@ def assign_issues(strategy, issues, issue_manager):
     with lock:
         for issue in issues:
             issue_manager.try_assign_issue(strategy, issue)
+            logging.info(f"Issue {issue.issue_id} assigned.")
             time.sleep(3)  # Simulating delay in assigning issues
 
 def resolve_issues(agent, issue_manager):
@@ -76,9 +86,14 @@ def resolve_issues(agent, issue_manager):
     """
     with lock:
         if agent.current_issue:
-            issue_manager.update_issue(agent.current_issue.issue_id, IssueStatus.RESOLVED)
+            issue_id = agent.current_issue.issue_id  # Capture the issue ID before changing the state
+            issue_manager.update_issue(issue_id, IssueStatus.RESOLVED)
             agent.resolve_current_issue("Issue resolved by refunding the amount")
+            issue_manager.resolve_issue(issue_id, "Issue resolved by refunding the amount")
+            logging.info(f"Issue {issue_id} resolved by agent {agent.name}.")
             time.sleep(5)  # Simulating delay in resolving the issue
+        else:
+            logging.warning(f"Agent {agent.name} has no current issue to resolve.")
 
 def reassign_waiting_issues(strategy, issue_manager):
     """
@@ -92,6 +107,7 @@ def reassign_waiting_issues(strategy, issue_manager):
             waiting_issues = issue_manager.get_issues_by_status(IssueStatus.WAITING)
             for issue in waiting_issues:
                 issue_manager.try_assign_issue(strategy, issue)
+                logging.info(f"Issue {issue.issue_id} reassigned from waiting status.")
             time.sleep(10)  # Check and reassign every 10 seconds
 
 def main():
@@ -115,16 +131,13 @@ def main():
     # Resolve issues for each agent
     resolve_threads = []
     for agent in agent_manager.agents.values():
-        resolve_thread = threading.Thread(target=resolve_issues, args=(agent, issue_manager))
-        resolve_threads.append(resolve_thread)
-        resolve_thread.start()
+        if agent.current_issue:  # Ensure the agent has an issue to resolve
+            resolve_thread = threading.Thread(target=resolve_issues, args=(agent, issue_manager))
+            resolve_threads.append(resolve_thread)
+            resolve_thread.start()
 
     for thread in resolve_threads:
         thread.join()
-
-    # Start reassigning waiting issues in the background
-    reassign_thread = threading.Thread(target=reassign_waiting_issues, args=(strategy, issue_manager))
-    reassign_thread.start()
 
     # Print agent work history
     for agent in agent_manager.agents.values():
