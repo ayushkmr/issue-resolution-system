@@ -84,12 +84,15 @@ class IssueManager(IIssueManager):
         """
         issue = self.get_issue_by_id(issue_id)
         if issue:
-            # Update status tracking
             old_status = issue.status
+            if issue in self.issues_by_status[old_status]:
+                self.issues_by_status[old_status].remove(issue)
+            
+            # Update the issue status
             issue.update_status(status, resolution)
-            self.issues_by_status[old_status].remove(issue)
+            
+            # Add the issue to the appropriate status list
             self.issues_by_status[status].append(issue)
-
             logging.info(f"Issue {issue_id} updated with status {status.value}")
 
     def add_to_waitlist(self, issue):
@@ -98,7 +101,12 @@ class IssueManager(IIssueManager):
 
         :param issue: The Issue object to be waitlisted
         """
+        old_status = issue.status
+        if issue in self.issues_by_status[old_status]:
+            self.issues_by_status[old_status].remove(issue)
+        
         issue.update_status(IssueStatus.WAITING)
+        self.issues_by_status[IssueStatus.WAITING].append(issue)
         self.waiting_issues.append(issue)
         logging.info(f"Issue {issue.issue_id} added to waitlist with status {IssueStatus.WAITING.value}")
 
@@ -144,7 +152,6 @@ class IssueManager(IIssueManager):
         """
         return self.issues_by_status[status]
 
-
     def resolve_issue(self, issue_id, resolution):
         """
         Resolves an issue by its ID with the provided resolution.
@@ -152,9 +159,5 @@ class IssueManager(IIssueManager):
         :param issue_id: The ID of the issue to be resolved
         :param resolution: Description of how the issue was resolved
         """
-        issue = self.issues.get(issue_id)
-        if issue:
-            issue.update_status(IssueStatus.RESOLVED, resolution)
-            logging.info(f"Issue {issue_id} resolved with resolution: {resolution}")
-        else:
-            logging.error(f"Issue {issue_id} not found for resolution")
+        self.update_issue(issue_id, IssueStatus.RESOLVED, resolution)
+        logging.info(f"Issue {issue_id} resolved with resolution: {resolution}")

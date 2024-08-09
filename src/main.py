@@ -129,9 +129,5 @@ def main():
     for agent in agent_manager.agents.values():
         print(f"Agent {agent.name} worked on: {[issue.issue_id for issue in agent.work_history]}")
 
-    # Print issues by status
-    for status in [IssueStatus.OPEN, IssueStatus.IN_PROGRESS, IssueStatus.RESOLVED, IssueStatus.WAITING]:
-        print(f"Issues with status {status.value}: {[issue.issue_id for issue in issue_manager.get_issues_by_status(status)]}")
-
 if __name__ == "__main__":
     main()
