@@ -4,6 +4,7 @@ main.py
 Simulates the workflow of the Customer Issue Resolution System using multithreading.
 """
 
+import sys
 import threading
 import time
 import json
@@ -75,7 +76,7 @@ def resolve_issues(agent, issue_manager):
     """
     with lock:
         if agent.current_issue:
-            issue_manager.update_issue(agent.current_issue.issue_id, IssueStatus.IN_PROGRESS)
+            issue_manager.update_issue(agent.current_issue.issue_id, IssueStatus.RESOLVED)
             agent.resolve_current_issue("Issue resolved by refunding the amount")
             time.sleep(5)  # Simulating delay in resolving the issue
 
@@ -128,6 +129,13 @@ def main():
     # Print agent work history
     for agent in agent_manager.agents.values():
         print(f"Agent {agent.name} worked on: {[issue.issue_id for issue in agent.work_history]}")
+
+    # Print issues by status
+    for status in [IssueStatus.OPEN, IssueStatus.IN_PROGRESS, IssueStatus.RESOLVED, IssueStatus.WAITING]:
+        print(f"Issues with status {status.value}: {[issue.issue_id for issue in issue_manager.get_issues_by_status(status)]}")
+
+    # Exit the program gracefully
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()
