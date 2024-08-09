@@ -1,8 +1,3 @@
-# issue-resolution-system
-Here is a `README.md` file that provides an overview of the system, including the functions, classes, design patterns, and strategies used in the project.
-
----
-
 # Customer Issue Resolution System
 
 ## Overview
@@ -22,10 +17,6 @@ The Customer Issue Resolution System is designed to manage and resolve customer 
   - [IssueManager](#issuemanager)
   - [AgentAssignmentStrategy](#agentassignmentstrategy)
   - [Factories](#factories)
-- [Design Patterns](#design-patterns)
-  - [Factory Pattern](#factory-pattern)
-  - [Strategy Pattern](#strategy-pattern)
-  - [Dependency Injection](#dependency-injection)
 - [Functions](#functions)
   - [createIssue](#createissue)
   - [addAgent](#addagent)
@@ -34,9 +25,14 @@ The Customer Issue Resolution System is designed to manage and resolve customer 
   - [updateIssue](#updateissue)
   - [resolveIssue](#resolveissue)
   - [viewAgentsWorkHistory](#viewagentsworkhistory)
+- [Design Patterns](#design-patterns)
+  - [Factory Pattern](#factory-pattern)
+  - [Strategy Pattern](#strategy-pattern)
+  - [Dependency Injection](#dependency-injection)
+- [Unit Tests](#unit-tests)
+  - [Running the Tests](#running-the-tests)
 - [Execution](#execution)
 - [Initial Data](#initial-data)
-- [Contributing](#contributing)
 
 ## System Architecture
 
@@ -117,21 +113,9 @@ The `AgentAssignmentStrategy` class handles the assignment of issues to agents b
 - **`AgentFactory`**: Creates instances of the `Agent` class.
 - **`UserFactory`**: Creates instances of the `User` class.
 
-## Design Patterns
-
-### Factory Pattern
-
-The Factory Pattern is used to create instances of `Issue`, `Agent`, and `User` classes. This pattern encapsulates the creation logic and ensures consistency in object creation.
-
-### Strategy Pattern
-
-The Strategy Pattern is used in the `AgentAssignmentStrategy` class to handle different assignment strategies. This allows the system to easily swap out the assignment logic without modifying the core logic.
-
-### Dependency Injection
-
-Dependency Injection is used to pass dependencies (like `AgentManager` and `IssueManager`) to the `AgentAssignmentStrategy` class. This reduces coupling and makes the code more maintainable and testable.
-
 ## Functions
+
+The solution implements the following key functions, ensuring the core functionalities of the Customer Issue Resolution System:
 
 ### `createIssue`
 
@@ -141,7 +125,14 @@ def createIssue(transactionId, issueType, subject, description, email):
     issue_manager.create_issue(issue.transaction_id, issue.issue_type, issue.subject, issue.description, issue.email)
 ```
 
-Creates a new issue in the system.
+- **Purpose**: Creates a new issue in the system based on the provided details.
+- **Input Parameters**:
+  - `transactionId`: The ID of the transaction related to the issue.
+  - `issueType`: The type of the issue (e.g., `PAYMENT_RELATED`).
+  - `subject`: A brief subject for the issue.
+  - `description`: A detailed description of the issue.
+  - `email`: The email of the user raising the issue.
+- **Output**: Returns the created issue object.
 
 ### `addAgent`
 
@@ -151,7 +142,12 @@ def addAgent(agentEmail, agentName, expertise):
     agent_manager.add_agent(agent.email, agent.name, agent.expertise)
 ```
 
-Adds a new agent to the system.
+- **Purpose**: Adds a new agent to the system with specific expertise.
+- **Input Parameters**:
+  - `agentEmail`: The email of the agent.
+  - `agentName`: The name of the agent.
+  - `expertise`: A list of `IssueType` instances representing the agent's expertise.
+- **Output**: Returns the created agent object.
 
 ### `assignIssue`
 
@@ -162,17 +158,23 @@ def assignIssue(issueId):
         strategy.assign_issue(issue)
 ```
 
-Assigns an issue to an available agent.
+- **Purpose**: Assigns an issue to an available agent based on the agent's expertise and availability.
+- **Input Parameters**:
+  - `issueId`: The unique ID of the issue to be assigned.
+- **Output**: Assigns the issue to a free agent or places it in a waiting queue.
 
 ### `getIssues`
 
 ```python
 def getIssues(filter):
-    issues = issue_manager.get_issues_by_status(filter)
+    issues = issue_manager.get_issues(filter)
     return issues
 ```
 
-Retrieves issues based on the provided filter (status).
+- **Purpose**: Retrieves a list of issues based on provided filter criteria.
+- **Input Parameters**:
+  - `filter`: A dictionary containing filter criteria (e.g., status, email).
+- **Output**: Returns a list of issues that match the filter criteria.
 
 ### `updateIssue`
 
@@ -181,7 +183,12 @@ def updateIssue(issueId, status, resolution):
     issue_manager.update_issue(issueId, status, resolution)
 ```
 
-Updates the status and resolution of an issue.
+- **Purpose**: Updates the status and optionally the resolution of an issue.
+- **Input Parameters**:
+  - `issueId`: The unique ID of the issue to be updated.
+  - `status`: The new status of the issue (`IssueStatus` enum).
+  - `resolution`: Optional resolution description.
+- **Output**: Updates the status and resolution of the specified issue.
 
 ### `resolveIssue`
 
@@ -190,7 +197,11 @@ def resolveIssue(issueId, resolution):
     issue_manager.resolve_issue(issueId, resolution)
 ```
 
-Marks an issue as resolved.
+- **Purpose**: Marks an issue as resolved with a provided resolution.
+- **Input Parameters**:
+  - `issueId`: The unique ID of the issue to be resolved.
+  - `resolution`: A description of how the issue was resolved.
+- **Output**: Updates the status of the issue to `RESOLVED`.
 
 ### `viewAgentsWorkHistory`
 
@@ -202,7 +213,50 @@ def viewAgentsWorkHistory():
     return history
 ```
 
-Returns a list of issues that each agent has worked on.
+- **Purpose**: Retrieves a list of issues each agent has worked on.
+- **Output**: Returns a dictionary with agent names as keys and lists of issue IDs they have worked on as values.
+
+## Design Patterns
+
+### Factory Pattern
+
+The Factory Pattern is used to create instances of `Issue`, `Agent`, and `User` classes. This pattern encapsulates the creation logic and ensures consistency in object creation.
+
+### Strategy Pattern
+
+The Strategy Pattern is used in the `AgentAssignmentStrategy` class to handle different assignment strategies. This allows the system to easily swap out the assignment logic without modifying
+
+ the core logic.
+
+### Dependency Injection
+
+Dependency Injection is used to pass dependencies (like `AgentManager` and `IssueManager`) to the `AgentAssignmentStrategy` class. This reduces coupling and makes the code more maintainable and testable.
+
+## Unit Tests
+
+Unit tests are implemented for the core classes in the system (`User`, `Agent`, `Issue`) to ensure their functionality is as expected. The tests cover various scenarios, including object creation, method execution, and status updates.
+
+### `test_user.py`
+
+Tests the `User` class, focusing on the creation of issues and their properties.
+
+### `test_agent.py`
+
+Tests the `Agent` class, including assigning and resolving issues.
+
+### `test_issue.py`
+
+Tests the `Issue` class, focusing on its initialization and status updates.
+
+### Running the Tests
+
+To run the tests, navigate to the project directory and execute the following command:
+
+```bash
+python -m unittest discover tests
+```
+
+This will automatically discover and run all the tests in the `tests` directory.
 
 ## Execution
 
